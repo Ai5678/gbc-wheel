@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Holistic Model – Global Brigades Canada</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Lato:wght@300;400;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Lato', sans-serif;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+  }
+
+  .holistic-section {
+    width: 100%;
+    background: transparent;
+    padding: 40px 24px;
+  }
+
+  .holistic-section h1 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    text-align: center;
+    color: #1a2340;
+    margin-bottom: 8px;
+  }
+
+  .holistic-section .subtitle {
+    text-align: center;
+    color: #5a6a8a;
+    font-size: 1rem;
+    margin-bottom: 56px;
+  }
+
+  .hm-layout {
+    display: flex;
+    align-items: center;
+    gap: 60px;
+  }
+
+  .wheel-container {
+    flex-shrink: 0;
+    position: relative;
+    width: 380px;
+    height: 380px;
+  }
+
+
+  #hm-wheel {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  /* ── The rotating ring ── */
+  #wheel-ring {
+    transition: transform 0.65s cubic-bezier(0.34, 1.20, 0.64, 1);
+    will-change: transform;
+  }
+
+  .seg-path {
+    transition: opacity .2s, filter .2s;
+    cursor: pointer;
+  }
+  .seg-path:hover { opacity: .82; }
+
+  .seg-group.active .seg-path {
+    filter: brightness(1.22) drop-shadow(0 0 7px rgba(255,255,255,.5));
+    opacity: 1;
+  }
+  /* Dim non-active segments when something is active */
+  #wheel-ring.has-active .seg-group:not(.active) .seg-path {
+    opacity: 0.55;
+  }
+
+  /* ── Label text ── */
+  .seg-label {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    fill: #fff;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    pointer-events: none;
+  }
+
+  /* ── Centre button (stays fixed) ── */
+  #centre-btn { cursor: pointer; }
+  #centre-btn circle { transition: fill .25s, r .25s; }
+  #centre-btn:hover circle { fill: #2d3f6e; }
+  #centre-btn text {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10.5px;
+    font-weight: 800;
+    fill: #fff;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    pointer-events: none;
+  }
+
+  /* ── Content panel ── */
+  .hm-content-panel {
+    flex: 1;
+    min-height: 300px;
+  }
+
+  .hm-tab {
+    display: none;
+    animation: fadeIn .4s ease;
+    padding: 28px 32px;
+    border-radius: 8px;
+    transition: background .4s ease;
+  }
+  .hm-tab.active { display: block; }
+  #tab-default  { background: rgba(26,  35,  64,  0.07); }
+  #tab-health   { background: rgba(229, 62,  62,  0.10); }
+  #tab-economic { background: rgba(43,  108, 176, 0.10); }
+  #tab-infra    { background: rgba(39,  103, 73,  0.10); }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .tab-icon {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 18px;
+  }
+  .tab-icon svg { width: 28px; height: 28px; }
+
+  .tab-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #1a2340;
+    margin-bottom: 12px;
+  }
+  .tab-subtitle {
+    font-size: 1rem;
+    color: #4a5568;
+    line-height: 1.65;
+    margin-bottom: 20px;
+  }
+  .tab-divider {
+    height: 3px; width: 48px;
+    border-radius: 2px;
+    margin-bottom: 20px;
+  }
+  .tab-body { color: #4a5568; font-size: .95rem; line-height: 1.7; }
+  .tab-body p { margin-bottom: 12px; }
+  .tab-body strong { color: #1a2340; }
+
+  @media (max-width: 760px) {
+    .hm-layout { flex-direction: column; gap: 40px; }
+    .wheel-container { width: 300px; height: 300px; }
+    .holistic-section { padding: 40px 20px; }
+    .wheel-container::after { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="holistic-section">
+  <h1>Our Holistic Model</h1>
+  <p class="subtitle">Click a segment to explore each pillar of our approach</p>
+
+  <div class="hm-layout">
+
+    <!-- ══════════ WHEEL ══════════ -->
+    <div class="wheel-container">
+      <svg id="hm-wheel" viewBox="-10 -10 220 220" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="grad-health" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#e53e3e; stop-opacity:0.72"/>
+            <stop offset="100%" style="stop-color:#b91c1c; stop-opacity:0.72"/>
+          </linearGradient>
+          <linearGradient id="grad-economic" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#2b6cb0; stop-opacity:0.72"/>
+            <stop offset="100%" style="stop-color:#1a4a82; stop-opacity:0.72"/>
+          </linearGradient>
+          <linearGradient id="grad-infra" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#276749; stop-opacity:0.72"/>
+            <stop offset="100%" style="stop-color:#145230; stop-opacity:0.72"/>
+          </linearGradient>
+
+        </defs>
+
+        <!-- Rotating ring: all segments live here -->
+        <g id="wheel-ring">
+          <g id="wheel-segments"></g>
+        </g>
+
+        <!-- Centre button: NOT inside wheel-ring, stays fixed -->
+        <g id="centre-btn" onclick="resetWheel()">
+          <circle cx="100" cy="100" r="34" fill="#1a2340"/>
+          <text x="100" y="95"  text-anchor="middle" dominant-baseline="middle">HOLISTIC</text>
+          <text x="100" y="109" text-anchor="middle" dominant-baseline="middle">MODEL</text>
+        </g>
+      </svg>
+    </div>
+
+    <!-- ══════════ CONTENT PANELS ══════════ -->
+    <div class="hm-content-panel">
+
+      <div class="hm-tab active" id="tab-default">
+        <div class="tab-title">Global Brigades Canada</div>
+        <p class="tab-subtitle">Our Holistic Model addresses the interconnected root causes of poverty through six pillars. Select a segment on the wheel to learn more about each programme area.</p>
+        <div class="tab-divider" style="background:#1a2340;"></div>
+        <div class="tab-body">
+          <p>Each pillar reinforces the others — economic empowerment supports health outcomes, clean infrastructure enables education, and legal access protects all of it. Together, they build communities that thrive independently and sustainably.</p>
+        </div>
+      </div>
+
+      <div class="hm-tab" id="tab-health">
+        <div class="tab-icon" style="background:#fff0f0;">
+          <svg viewBox="0 0 96.87 96.87" xmlns="http://www.w3.org/2000/svg">
+            <polygon points="31.7 0.08 31.77 31.85 0 31.93 0.08 65.17 31.85 65.09 31.93 96.87 65.17 96.79 65.09 65.01 96.87 64.94 96.79 31.7 65.01 31.77 64.94 0 31.7 0.08" fill="#e53e3e"/>
+          </svg>
+        </div>
+        <div class="tab-title">Health &amp; Well-being</div>
+        <p class="tab-subtitle">We partner with communities to expand access to medical, dental, and preventative care while fostering long-term wellness, education, and psychosocial support.</p>
+        <div class="tab-divider" style="background:#e53e3e;"></div>
+        <div class="tab-body">
+          <p><strong>Aligned Programs:</strong> Student-led brigades (Medical and Dental), Faculty-led programs (Kambia Nursing and Medical Squads), and community-led initiatives (Community Health Workers) synergistically strengthen local health systems and empower healthier futures.</p>
+          <p><strong>Sustainability Lens:</strong> Training local health workers ensures continuity of care, health education reduces preventable disease through long-lasting systems, and our clinics integrate environmentally responsible practices that minimize waste and protect community environments.</p>
+        </div>
+      </div>
+
+      <div class="hm-tab" id="tab-economic">
+        <div class="tab-icon" style="background:#ebf4ff;">
+          <svg viewBox="0 0 109.16 107.12" xmlns="http://www.w3.org/2000/svg">
+            <path d="M100.92,2.93c-1.3-.27-2.75-.53-4.31-.77A239.84,239.84,0,0,0,62.13,0c-26,0-47,3-47,6.74V34.26c0,3.72,21,6.74,47,6.74,4.32,0,8.51-.09,12.49-.24V13.24c1.95-.08,3.85-.17,5.69-.28V40.47c1.65-.09,3.25-.21,4.8-.33V12.62c2-.16,3.89-.34,5.68-.54V39.6c1.56-.17,3-.36,4.45-.56V11.53c2.1-.3,4-.63,5.68-1V38.07c5.2-1.09,8.24-2.4,8.24-3.81V6.74C109.16,5.32,106.12,4,100.92,2.93Z" fill="#2b6cb0"/>
+            <path d="M15.1,74.59v25.79c0,3.72,21,6.74,47,6.74,4.65,0,9.13-.1,13.37-.28V81.06c-4.24.18-8.72.27-13.37.27C36.15,81.33,16.27,78.23,15.1,74.59Z" fill="#2b6cb0"/>
+          </svg>
+        </div>
+        <div class="tab-title">Economic Empowerment</div>
+        <p class="tab-subtitle">We create pathways out of poverty by promoting inclusive finance, entrepreneurship, and affordable housing — building stability that communities can sustain for generations.</p>
+        <div class="tab-divider" style="background:#2b6cb0;"></div>
+        <div class="tab-body">
+          <p><strong>Aligned Programs:</strong> Student-led brigades (Global Business Consulting, Empowered Legal), Faculty-led programs (Kambia Business), and community-led initiatives like Eskala and Montemar enable families to access capital, build businesses, and achieve homeownership.</p>
+          <p><strong>Sustainability Lens:</strong> Eskala's community-owned banks are designed for longevity, Montemar's eco-friendly homes balance affordability with environmental resilience, and business advising encourages growth strategies that protect natural resources and prioritize circular economies.</p>
+        </div>
+      </div>
+
+      <div class="hm-tab" id="tab-infra">
+        <div class="tab-icon" style="background:#f0fff4;">
+          <svg viewBox="0 0 116.47 122.47" xmlns="http://www.w3.org/2000/svg">
+            <path d="M52.92,115.56a1.91,1.91,0,0,0,3.29-.82c2.1-8.91,5.58-34-13.23-59.31A176,176,0,0,0,13.68,24.5,6.27,6.27,0,0,0,3.55,28.14C.74,42.45-3,69.61,4,88.21c6.66,17.6,22,27.67,31.35,32.42a1.91,1.91,0,0,0,2.38-2.86C32.12,110.26,23.91,96,22.32,74.89a1.19,1.19,0,0,1,2.26-.59C32.83,92,47.29,109.21,52.92,115.56Z" fill="#276749"/>
+            <path d="M65.13,120.55a1.9,1.9,0,0,0,2.49,1.83c9.53-3.07,43.54-16.79,48-57.36,2.93-26.61-2.45-49.69-5.7-60.56A6.27,6.27,0,0,0,101.32.57,172.25,172.25,0,0,0,70.2,18.87C53.2,31.7,45.51,45.09,45.51,45.09s5.86,7.9,9.11,13.3,7.3,15.94,7.3,15.94S73.31,50,86,36.9a1.06,1.06,0,0,1,1.72,1.21C74.61,63.57,65.19,111.84,65.13,120.55Z" fill="#276749"/>
+          </svg>
+        </div>
+        <div class="tab-title">Sustainable Infrastructure</div>
+        <p class="tab-subtitle">We co-create the physical foundations every community needs — clean water, sanitation, housing, renewable energy, and resilient public spaces.</p>
+        <div class="tab-divider" style="background:#276749;"></div>
+        <div class="tab-body">
+          <p><strong>Aligned Programs:</strong> Student-led brigades (Global Engineering Consulting, Public Health Brigades and Water Brigades) and Faculty-led programs (STEM Squads and Kambia Engineering) design and implement immediate solutions, while community-led programs like Reforestation &amp; Agroforestry and Montemar expand long-term environmental resilience.</p>
+          <p><strong>Sustainability Lens:</strong> Our engineers design climate-resilient water and sanitation systems, eco-housing construction integrates renewable energy and resource conservation, and reforestation restores local ecosystems to ensure infrastructure development goes hand-in-hand with environmental stewardship.</p>
+        </div>
+      </div>
+
+
+    </div><!-- /.hm-content-panel -->
+  </div><!-- /.hm-layout -->
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────
+//  Segment definitions
+//  activeAngle: the final angle (deg) this segment's midpoint should sit
+//  at when active. You specified:
+//    health   → 90°  (3 o'clock / right)
+//    infra    → 210°
+//    economic → 330°
+//  The other three are evenly spaced between those (each 60° apart).
+// ─────────────────────────────────────────────────────────────────────
+const segments = [
+  { id: 'health',   label: 'HEALTH & WELL-BEING',       color: 'url(#grad-health)',   tabId: 'tab-health'   },
+  { id: 'infra',    label: 'SUSTAINABLE INFRASTRUCTURE', color: 'url(#grad-infra)',    tabId: 'tab-infra'    },
+  { id: 'economic', label: 'ECONOMIC EMPOWERMENT',       color: 'url(#grad-economic)', tabId: 'tab-economic' },
+];
+
+const CX = 100, CY = 100;
+const R_OUTER = 95, R_INNER = 37;
+const N = segments.length;
+const SLICE = 360 / N;          // 120° per segment
+const SLICE_RAD = (2 * Math.PI) / N;
+const GAP = 0.028;              // radians gap between slices
+
+// Each segment's midpoint in the static (pre-rotation) layout.
+// We place segment[i] so its midpoint is at (i * 60°) from the offset.
+// OFFSET_DEG = -90 means segment[0] midpoint starts at -90 + 30 = -60°
+//   wait — let's be precise: midpoint of seg[i] = OFFSET_DEG + i*60 + 30
+// We want seg[0] (health) midpoint to land at 90° when active.
+// So the ring rotation needed = 90 - midpoint_of_health_in_static_layout
+// We'll compute midpoints in degrees for each segment.
+
+const OFFSET_DEG = -90; // layout starts at top
+
+function degToRad(d) { return d * Math.PI / 180; }
+function polar(r, angleDeg) {
+  const a = degToRad(angleDeg);
+  return { x: CX + r * Math.cos(a), y: CY + r * Math.sin(a) };
+}
+
+function segmentPath(startDeg, endDeg) {
+  const gapDeg = GAP * 180 / Math.PI;
+  const s1 = polar(R_INNER, startDeg + gapDeg);
+  const s2 = polar(R_OUTER, startDeg + gapDeg);
+  const e1 = polar(R_OUTER, endDeg   - gapDeg);
+  const e2 = polar(R_INNER, endDeg   - gapDeg);
+  const large = (endDeg - startDeg) > 180 ? 1 : 0;
+  return [
+    `M ${s1.x} ${s1.y}`,
+    `L ${s2.x} ${s2.y}`,
+    `A ${R_OUTER} ${R_OUTER} 0 ${large} 1 ${e1.x} ${e1.y}`,
+    `L ${e2.x} ${e2.y}`,
+    `A ${R_INNER} ${R_INNER} 0 ${large} 0 ${s1.x} ${s1.y}`,
+    'Z'
+  ].join(' ');
+}
+
+function arcPath(midDeg) {
+  const r = 68;
+  const spanDeg = 52; // half-arc span — wider for 120° segments
+  const start = polar(r, midDeg - spanDeg);
+  const end   = polar(r, midDeg + spanDeg);
+  return `M ${start.x} ${start.y} A ${r} ${r} 0 0 1 ${end.x} ${end.y}`;
+}
+
+// ── Build segments ───────────────────────────────────────────────────
+const container = document.getElementById('wheel-segments');
+const defs      = document.querySelector('#hm-wheel defs');
+const ring      = document.getElementById('wheel-ring');
+
+// Store per-segment data for rotation math
+segments.forEach((seg, i) => {
+  const startDeg = OFFSET_DEG + i * SLICE;
+  const endDeg   = startDeg + SLICE;
+  const midDeg   = startDeg + SLICE / 2;
+
+  seg._midDeg = midDeg;
+
+  // Group — arc paths go INSIDE the group so they rotate with the ring
+  const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  g.setAttribute('class', 'seg-group');
+  g.dataset.index = i;
+  g.style.cursor = 'pointer';
+
+  // Slice path
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('class', 'seg-path');
+  path.setAttribute('d', segmentPath(startDeg, endDeg));
+  path.setAttribute('fill', seg.color);
+  g.appendChild(path);
+
+  // Arc path 1 (outer, r=68) — inside group, not defs
+  const arcId  = `arc-${seg.id}`;
+  const arcEl  = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  arcEl.setAttribute('id', arcId);
+  arcEl.setAttribute('d', arcPath(midDeg));
+  arcEl.setAttribute('fill', 'none');
+  arcEl.setAttribute('stroke', 'none');
+  g.appendChild(arcEl);
+
+  // Arc path 2 (inner, r=58) — inside group
+  const arcId2 = `arc2-${seg.id}`;
+  const arcEl2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  arcEl2.setAttribute('id', arcId2);
+  const r2 = 58, spanDeg2 = 52;
+  const s2s = polar(r2, midDeg - spanDeg2);
+  const s2e = polar(r2, midDeg + spanDeg2);
+  arcEl2.setAttribute('d', `M ${s2s.x} ${s2s.y} A ${r2} ${r2} 0 0 1 ${s2e.x} ${s2e.y}`);
+  arcEl2.setAttribute('fill', 'none');
+  arcEl2.setAttribute('stroke', 'none');
+  g.appendChild(arcEl2);
+
+  // Curved labels — split into two lines
+  const words = seg.label.split(' ');
+  const mid   = Math.ceil(words.length / 2);
+  const line1 = words.slice(0, mid).join(' ');
+  const line2 = words.slice(mid).join(' ');
+
+  if (line2) {
+    const textEl1 = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    textEl1.setAttribute('class', 'seg-label');
+    const tp1 = document.createElementNS('http://www.w3.org/2000/svg', 'textPath');
+    tp1.setAttribute('href', `#${arcId}`);
+    tp1.setAttribute('startOffset', '50%');
+    tp1.setAttribute('text-anchor', 'middle');
+    tp1.textContent = line1;
+    textEl1.appendChild(tp1);
+    g.appendChild(textEl1);
+
+    const textEl2 = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    textEl2.setAttribute('class', 'seg-label');
+    const tp2 = document.createElementNS('http://www.w3.org/2000/svg', 'textPath');
+    tp2.setAttribute('href', `#${arcId2}`);
+    tp2.setAttribute('startOffset', '50%');
+    tp2.setAttribute('text-anchor', 'middle');
+    tp2.textContent = line2;
+    textEl2.appendChild(tp2);
+    g.appendChild(textEl2);
+  } else {
+    const textEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    textEl.setAttribute('class', 'seg-label');
+    const tp = document.createElementNS('http://www.w3.org/2000/svg', 'textPath');
+    tp.setAttribute('href', `#${arcId}`);
+    tp.setAttribute('startOffset', '50%');
+    tp.setAttribute('text-anchor', 'middle');
+    tp.textContent = line1;
+    textEl.appendChild(tp);
+    g.appendChild(textEl);
+  }
+
+  g.addEventListener('click', () => activateSeg(i));
+  container.appendChild(g);
+});
+
+// ── Rotation state ───────────────────────────────────────────────────
+let currentRingDeg = 0;
+let activeIndex    = null;
+
+// Shortest path between two angles
+function shortestDelta(from, to) {
+  let d = ((to - from) % 360 + 360) % 360;
+  if (d > 180) d -= 360;
+  return d;
+}
+
+// Fixed position where the active segment always lands (3 o'clock = 90°)
+const ACTIVE_POSITION = 90;
+
+function activateSeg(i) {
+  const seg = segments[i];
+
+  // The target ring rotation = angle that puts seg._midDeg at ACTIVE_POSITION.
+  // When ring is at R degrees, segment midpoint sits at: seg._midDeg + R
+  // We want: seg._midDeg + R = ACTIVE_POSITION  →  R = ACTIVE_POSITION - seg._midDeg
+  const targetRingDeg = ACTIVE_POSITION - seg._midDeg;
+
+  // Take shortest path from current rotation to target
+  currentRingDeg += shortestDelta(currentRingDeg, targetRingDeg);
+
+  ring.setAttribute('transform', `rotate(${currentRingDeg}, ${CX}, ${CY})`);
+
+  // Highlight active, dim others
+  document.querySelectorAll('.seg-group').forEach((g, gi) => {
+    g.classList.toggle('active', gi === i);
+  });
+  ring.classList.add('has-active');
+
+  // Switch content panel
+  document.querySelectorAll('.hm-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(seg.tabId).classList.add('active');
+
+  activeIndex = i;
+}
+
+function resetWheel() {
+  // Rotate back to 0
+  currentRingDeg = 0;
+  ring.setAttribute('transform', `rotate(0, ${CX}, ${CY})`);
+
+
+
+  document.querySelectorAll('.seg-group').forEach(g => g.classList.remove('active'));
+  ring.classList.remove('has-active');
+
+  document.querySelectorAll('.hm-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-default').classList.add('active');
+
+  activeIndex = null;
+}
+</script>
+
+<script>
+  /* Auto-resize: tell the parent page how tall this document is
+     so the iframe can match it with no scrollbar.             */
+  function notifyHeight() {
+    var h = document.body.scrollHeight;
+    window.parent.postMessage({ hmIframeHeight: h }, '*');
+  }
+  window.addEventListener('load', notifyHeight);
+  window.addEventListener('resize', notifyHeight);
+  /* Re-check after tab switch animations settle */
+  document.addEventListener('click', function() {
+    setTimeout(notifyHeight, 500);
+  });
+</script>
+</body>
+</html>
